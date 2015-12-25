@@ -252,8 +252,9 @@ int main(int argc, char** argv){
 	gy = (yNot.rows/2 - gy) / yNot.rows+offset;
 	yx = (yx - yNot.cols/2) / yNot.cols;
 	yy = (yNot.rows/2 - yy) / yNot.rows;
+	std::cout << yNot.rows << yNot.cols;
  
-	std::cout <<"\n"<<  rx<<"\n"<<  ry<<"\n"<<  gx<<"\n"<<  gy<<"\n"<<  yx<<"\n"<<  yy << "\n";
+	std::cout <<"\n"<<  rx <<"\n"<<  ry<<"\n"<<  gx<<"\n"<<  gy<<"\n"<<  yx<<"\n"<<  yy << "\n";
  
 	return(0);
 }
