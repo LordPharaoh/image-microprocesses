@@ -2,9 +2,6 @@
 
 //obtains image; currently uses imread but should be switched to Surya's thing.
 cv::Mat obtainImage(int argc, char** argv){
-	if(argc != 2){
-		std::cout << "Incorrect usage of arguments";
-	}
 	cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
 	return(image);
 }
@@ -69,8 +66,13 @@ int diffDist = 8;
 //
 int rx,ry,gx,gy,yx,yy;
 int main(int argc, char** argv){
+	if(argc != 2){
+		std::cout << "Incorrect usage of arguments\n";
+		return -1;
+	}
 	//obtain image; see above
 	cv::Mat firstImage = obtainImage(argc, argv);
+	
 	//define processedImage
 	cv::Mat processedImage;
 	
