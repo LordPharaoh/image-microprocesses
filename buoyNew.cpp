@@ -1,14 +1,7 @@
 #include "buoyNew.hpp"
 
-//obtains image; currently uses imread but should be switched to Surya's thing.
-cv::Mat obtainImage(int argc, char** argv){
-	cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
-	return(image);
-}
- 
- 
- 
-//this came from visiontask.cpp in eva 
+//Creates an equalized distribution of certain colors
+//Read more at http://docs.opencv.org/2.4/doc/tutorials/imgproc/histograms/histogram_equalization/histogram_equalization.html
 cv::Mat equalColorHist(cv::Mat& img, bool red, bool green, bool blue)
 {
 	std::vector<cv::Mat> channels;
@@ -31,6 +24,9 @@ cv::Mat equalColorHist(cv::Mat& img, bool red, bool green, bool blue)
 	cv::merge(channels, result);
 	return result;
 }
+
+//Turns the mat into a diffmap (make each pixel the difference between it and its neighbors)
+//Useful because the water near the top usually looks like the green buoys near the bottom
 cv::Mat generateDiffMap(cv::Mat& img, int diff)
 {
 	cv::Mat diffMap = cv::Mat(img.size(), CV_32F, cv::Scalar(0));
@@ -55,6 +51,7 @@ cv::Mat generateDiffMap(cv::Mat& img, int diff)
 	
 //These values were originally in config for l_gate but i don't see a need for them to be configurable. 
 //If you would like them to be configurable, talk to Varun. If Varun has graduated/quit for the Blue Devils by this point, I wish you the best of luck
+//This is Evan. I think the point is to make basically all the constants configurable if need be. I will make them configurable. Later.
 float cropx = 1.0;
 float cropy = 1.0;
 float offset = .9 * (1-cropy);
@@ -62,26 +59,20 @@ float scalex = 0.2;
 float scaley = 0.2;
 int diffDist = 8;
 //End supposedly config values that I suspect were never acually modified
-//
-//
-int rx,ry,gx,gy,yx,yy;
-int main(int argc, char** argv){
-	if(argc != 2){
-		std::cout << "Incorrect usage of arguments\n";
-		return -1;
-	}
-	//obtain image; see above
-	cv::Mat firstImage = obtainImage(argc, argv);
-	
-	//define processedImage
+
+int rx, ry, gx, gy, yx, yy;
+
+void findbuoys(cv::Mat &firstImage)
+{
 	cv::Mat processedImage;
 	
 	int image_size = firstImage.rows*firstImage.cols;
-	//this paranthesized staement is large enough to justify newlines and indentation
+	
+	//This paranthesized staement is large enough to justify newlines and indentation
 	//It resizes the image by some arcane parameters
-	if (firstImage.cols == 0 ){
-		std::cout<<"Error reading file";
-		return -1;
+	if (image_size <= 0 )
+	{
+		return;
 	}
 	firstImage(
 		cv::Rect(
@@ -101,13 +92,14 @@ int main(int argc, char** argv){
 			firstImage.rows*cropy*scaley
 			)
 		);
-	//and finally the end of the monstrosity
-	//create a temp image to store lower smaller processed image
+	//And finally the end of the monstrosity
+	
+	//Create a temp image to store lower smaller processed image
 	cv::Mat output(yNot.rows, yNot.cols, CV_8UC3, cv::Scalar(0,0,0));
-	//makign a pointer to first element of output
+	//Making a pointer to first element of output
 	unsigned char* op = output.ptr();
 	
-	//initialising come Mats for later usage
+	//Initialising come Mats for later usage
 	cv::Mat imgR, imgG, imgY;
 	imgY.create(yNot.rows, yNot.cols, CV_8UC1);
 	imgG.create(yNot.rows, yNot.cols, CV_8UC1);
@@ -118,7 +110,7 @@ int main(int argc, char** argv){
 	unsigned char *yPtr = imgY.ptr();
 	const unsigned char* ip = yNot.ptr();
 
-	//filter for green
+	//Filter for green (conspicuously devoid of comments...)
 	cv::Mat grMat(yNot.size(), CV_32F, cv::Scalar(0));
 	cv::Mat reMat(yNot.size(), CV_32F, cv::Scalar(0));
 	float* gp = grMat.ptr<float>();
@@ -151,7 +143,8 @@ int main(int argc, char** argv){
 			int b = ip[3*i], g = ip[3*i+1], r = (int)ip[3*i+2];
 			
 			op[3*i+2] = drffp[i]/10+128;
-			// filter for red
+			
+			//Filter for red
 			if (drffp[i] > rVals[0])
 			{
 				rVals[0] = drffp[i];
@@ -163,20 +156,20 @@ int main(int argc, char** argv){
 				rVals[3] = drffp[i];
 			}
 
-			// filter for yellow
+			//Filter for yellow
 			yPtr[i] = std::max(0, std::min(255, 128+(r+g-b)/4));
 			op[3*i] = yPtr[i];
 
-			// find yellow buoy
+			//Find yellow buoy
 			if (yPtr[i] > yVals[0])
 			{
 				yVals[0] = yPtr[i];
 				yVals[1] = i % yNot.cols;
 				yVals[2] = i / yNot.cols;
 			}
-
 			op[3*i+1] = diffp[i]+128;
-			//find green buoy and max/min values
+			
+			//Find green buoy and max/min values
 			if (diffp[i] > gVals[0])
 			{
 				gVals[0] = diffp[i];
@@ -224,7 +217,7 @@ int main(int argc, char** argv){
 		}
 	}
 
-	// highlight buoys on processed yNot
+	//Highlight buoys on processed yNot (unnecessary but useful to see)
 	op[(int)(3*(ry*yNot.cols+rx))] = 0;
 	op[(int)(3*(ry*yNot.cols+rx))+1] = 0;
 	op[(int)(3*(gy*yNot.cols+gx))] = 0;
@@ -235,9 +228,9 @@ int main(int argc, char** argv){
 	op[(int)(3*(ry*yNot.cols+rx))+2] = 255;
 	op[(int)(3*(yy*yNot.cols+yx))] = 255;
 
-	// resize filtered yNot for processed yNot
+	//Resize filtered yNot for processed yNot
 
-	//this stuff didn't work so I removed it
+	//This stuff didn't work so I removed it
 	 /*processedImage(
 			cv::Rect(processedImage.cols*(1-cropx)/2, 
 			processedImage.rows*(1-cropy-offset)/2, 
@@ -248,27 +241,20 @@ int main(int argc, char** argv){
 	/*cv::resize(output, processedImage, 
 		cv::Size(processedImage.cols*cropx, processedImage.rows*cropy), 0, 0, cv::INTER_NEAREST
 		);*/
+	
 	rx = (rx - yNot.cols/2) / yNot.cols;
 	ry = (yNot.rows/2 - ry) / yNot.rows;
 	gx = (gx - yNot.cols/2) / yNot.cols;
 	gy = (yNot.rows/2 - gy) / yNot.rows+offset;
 	yx = (yx - yNot.cols/2) / yNot.cols;
 	yy = (yNot.rows/2 - yy) / yNot.rows;
-	std::cout << yNot.rows << yNot.cols;
- 
-	std::cout <<"\n"<<  rx <<"\n"<<  ry<<"\n"<<  gx<<"\n"<<  gy<<"\n"<<  yx<<"\n"<<  yy << "\n";
- 
-	return(0);
 }
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
+
+int main(int argc, char* argv[])
+{
+	//TODO: Load image from stdin instead. Or load it as cv::Mat arg from other part of the program.
+	if(argc != 2) {return -1;}	
+	cv::Mat input = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
+	findbuoys(input);
+	std::cout << rx << "\n" << ry << "\n" << gx << "\n" << gy << "\n" << yx << "\n" << yy << "\n";
+}
