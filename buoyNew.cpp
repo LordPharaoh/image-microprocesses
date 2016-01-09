@@ -274,7 +274,7 @@ void findbuoys(cv::Mat &firstImage)
 		);*/
  
  
-	//std::cout << rx << "\n" << ry << "\n" << gx << "\n" << gy << "\n" << yx << "\n" << yy << "\n";
+	std::cout << rx << "\n" << ry << "\n" << gx << "\n" << gy << "\n" << yx << "\n" << yy << "\n";
  
  
 	//rx = (rx - yNot.cols/2) / yNot.cols;
