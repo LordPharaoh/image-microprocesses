@@ -5,9 +5,10 @@ static std::vector< std::array<double,2> > black_vals (3);
 static std::vector< std::array<double,2> > orange_vals (3);
 static std::vector< std::array<double,2> > white_vals (3);
 static std::vector< std::array<double,2> > yellow_vals (3);
-std::vector<cv::Point2f> bin_contours(cv::Mat img_bgr_enhanced,
-		std::vector<cv::Mat> *masks,
-		std::vector< std::vector<cv::Point> > *hulls)
+int yellow_min_area, orange_min_area, black_min_area, white_min_area;
+int white_hull_min_area;
+int black_fallback;
+std::vector<cv::Point2f> bin_contours(cv::Mat img_bgr_enhanced, std::vector<cv::Mat> *masks, std::vector< std::vector<cv::Point> > *hulls)
 {
 	cv::Mat img_hsv;
 	cv::cvtColor(img_bgr_enhanced, img_hsv, CV_BGR2HSV, 0);
@@ -56,8 +57,7 @@ std::vector<cv::Point2f> bin_contours(cv::Mat img_bgr_enhanced,
 			hulls_white);
 
 	// filter these hulls by area now
-	color_crop::filter(color_crop::filter_contours_area(hulls_white,
-				white_hull_min_area), hulls_white);
+	color_crop::filter(color_crop::filter_contours_area(hulls_white, white_hull_min_area), hulls_white);
 
 	// remove white contours that do not contain a black contour
 	color_crop::filter(scores_area_black, contours_black.first);
@@ -142,7 +142,8 @@ std::vector<cv::Point2f> bin_contours(cv::Mat img_bgr_enhanced,
 			color_crop::contours_sort_by_area(hulls_white));
 
 	// log the image with contours	
-	VisionTask::processedImage = color_crop::draw_contours(
+	cv::Mat processedImage;
+	processedImage = color_crop::draw_contours(
 			hulls_white, img_bgr_enhanced);
 
 	std::vector<cv::Point2f> centroids(hulls_white.size());
@@ -223,11 +224,11 @@ int getBins(bool sim, cv::Mat image)
 	int red_min_integrand;	
 	cfg.lookupValue("dropper.red_min_integrand", red_min_integrand);
 	//// the min contour areas, contours below which will be ignored
-	//cfg->lookupValue("dropper.yellow_min_area", yellow_min_area);
-	//cfg->lookupValue("dropper.black_min_area", black_min_area);
-	//cfg->lookupValue("dropper.white_min_area", white_min_area);
-	//cfg->lookupValue("dropper.orange_min_area", orange_min_area);
-	//cfg->lookupValue("dropper.white_hull_min_area", white_hull_min_area);
+	cfg.lookupValue("dropper.yellow_min_area", yellow_min_area);
+	cfg.lookupValue("dropper.black_min_area", black_min_area);
+	cfg.lookupValue("dropper.white_min_area", white_min_area);
+	cfg.lookupValue("dropper.orange_min_area", orange_min_area);
+	cfg.lookupValue("dropper.white_hull_min_area", white_hull_min_area);
 	// enhancement might need to turned off for simulator
 	bool useenhance;
 	cfg.lookupValue("dropper.use_enhance", useenhance);
@@ -238,7 +239,7 @@ int getBins(bool sim, cv::Mat image)
 	//cfg->lookupValue("dropper.offset_time", dropperOffsetTime);
 	//// if true it will look for more bins with the black areas directly
 	//// if less than the maximum amount of bins are found originally
-	//cfg->lookupValue("dropper.black_fallback", black_fallback);
+	cfg.lookupValue("dropper.black_fallback", black_fallback);
 	//// how close sub needs to be so that it will not readjust its
 	//// heading while approaching the bin
 	//cfg->lookupValue("dropper.min_run_dist", minRunDist);
@@ -259,7 +260,7 @@ int getBins(bool sim, cv::Mat image)
 		cv::split(image, channels);
 		if (color_crop::integrate(channels[2], 175, 255) < red_min_integrand)
 		{
-			std::cout<<"found 0 bins\n";
+			std::cout<<"found 0 bins \n" << std::endl;
 			std::cout<<"bins: \n";
 			return 0;
 		}
@@ -271,7 +272,7 @@ int getBins(bool sim, cv::Mat image)
 	{
 		img_enhanced = image;
 	}
-	std::vector<cv::Point2f> centroids = bin_contours(img_enhanced);
+	std::vector<cv::Point2f> centroids = bin_contours(img_enhanced, nullptr, nullptr);
 
 	numBins = 0;
 	for (; (numBins < centroids.size()) &&
@@ -293,6 +294,6 @@ int getBins(bool sim, cv::Mat image)
 
 int main(int argc,char **argv) {
 	cv::Mat imagetemp = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
-	getBins(argv[2] == "s",imagetemp);
-	return;
+	getBins(*argv[2] == 's',imagetemp);
+	return 0;
 }
