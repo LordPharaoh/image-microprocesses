@@ -295,7 +295,13 @@ int main(int argc, char* argv[])
 {
 	//TODO: Load image from stdin instead. Or load it as cv::Mat arg from other part of the program.
 	if(argc != 2) {return -1;}	
-	cv::Mat input = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
-	findbuoys(input);
-	std::cout << rx << "\n" << ry << "\n" << gx << "\n" << gy << "\n" << yx << "\n" << yy << "\n";
+	while(true){
+		char temp;
+ 		std::cin.get(temp);
+		if(temp == 'b') {
+			cv::Mat input = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
+			findbuoys(input);
+			std::cout << "6 " << rx << "\n" << ry << "\n" << gx << "\n" << gy << "\n" << yx << "\n" << yy << "\n";
+		}
+	}
 }

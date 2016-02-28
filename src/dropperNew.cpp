@@ -282,18 +282,23 @@ int getBins(bool sim, cv::Mat image)
 		bins[numBins].y = .5f - centroids[numBins].y/img_enhanced.rows;
 	}
 
-	std::cout << "found " << numBins << " bins";
-	std::cout << "bins: ";
+	std::cout << numBins << "\n";
 	for (int i = 0; i < numBins; i++)
 	{
-		std::cout<< bins[i];
+		std::cout<< bins[i] << "\n" ;
 	}
 	std::cout<< std::endl;
 	return 0;
 }
 
 int main(int argc,char **argv) {
-	cv::Mat imagetemp = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
-	getBins(*argv[2] == 's',imagetemp);
+	while(true){
+		char temp;
+		std::cin.get(temp);
+		if(temp == 'd'){
+			cv::Mat imagetemp = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
+			getBins(*argv[2] == 's',imagetemp);
+		}
+	}
 	return 0;
 }
