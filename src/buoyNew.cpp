@@ -278,7 +278,6 @@ void findbuoys(cv::Mat &firstImage)
 	cv::imshow("Hi", yNot);
  
  
-	std::cout << rx << "\n" << ry << "\n" << gx << "\n" << gy << "\n" << yx << "\n" << yy << "\n";
  
  
 	//rx = (rx - yNot.cols/2) / yNot.cols;
